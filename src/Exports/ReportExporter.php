@@ -2,20 +2,15 @@
 
 namespace Wjbecker\FilamentReportBuilder\Exports;
 
-use Wjbecker\FilamentReportBuilder\Models\Report;
 use Carbon\Carbon;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
-use Illuminate\Support\Str;
 
 class ReportExporter extends Exporter
 {
-    public static function getColumns(): array
+    public static function getColumns($report = null): array
     {
-        $id = Str::of(url()->previous())->between('reports/', '/view')->toInteger();
-        $report = Report::find($id);
-
         $columns = [];
         foreach ($report->data['columns'] as $header) {
             $data = json_decode($header['column_data']);

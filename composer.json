@@ -28,6 +28,7 @@
     "prefer-stable": true,
     "require": {
         "php" : "^8.0",
-        "spatie/laravel-package-tools": "^1.0|^1.13"
+        "spatie/laravel-package-tools": "^1.0|^1.13",
+        "maatwebsite/excel": "^3.1"
     }
 }
