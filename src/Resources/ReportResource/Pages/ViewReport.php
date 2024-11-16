@@ -40,7 +40,6 @@ class ViewReport extends Page implements HasTable
         return [
             ReportExportAction::make()->label('Export')
                 ->exporter(ReportExporter::class)
-                ->job(PrepareCsvExport::class)
                 ->record($this->record)
                 ->columnMapping(false)
                 ->fileName(function() {

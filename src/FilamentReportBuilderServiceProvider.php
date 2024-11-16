@@ -12,6 +12,6 @@ class FilamentReportBuilderServiceProvider extends PackageServiceProvider
         $package
             ->name('filament-report-builder')
             ->hasViews()
-            ->hasMigrations(['create_reports_table']);
+            ->hasMigrations(['create_reports_table', 'create_report_exports_table']);
     }
 }

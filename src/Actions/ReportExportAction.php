@@ -23,6 +23,7 @@ use Illuminate\Support\Facades\Bus;
 use Illuminate\Support\Number;
 use Illuminate\Support\Str;
 use Livewire\Component;
+use Wjbecker\FilamentReportBuilder\Models\ReportExport;
 
 class ReportExportAction extends Action
 {
@@ -104,6 +105,11 @@ class ReportExportAction extends Action
             $export->file_name = $action->getFileName($export) ?? $exporter->getFileName($export);
             $export->save();
 
+            $reportExport = app(ReportExport::class);
+            $reportExport->report()->associate($this->record);
+            $reportExport->export()->associate($export);
+            $reportExport->save();
+
             $formats = $action->getFormats() ?? $exporter->getFormats();
             $hasCsv = in_array(ExportFormat::Csv, $formats);
             $hasXlsx = in_array(ExportFormat::Xlsx, $formats);
@@ -175,12 +181,5 @@ class ReportExportAction extends Action
                 ->success()
                 ->send();
         });
-    }
-
-    public function record($record): static
-    {
-        $this->record = $record;
-
-        return $this;
     }
 }

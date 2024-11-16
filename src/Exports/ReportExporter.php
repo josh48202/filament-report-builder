@@ -6,9 +6,19 @@ use Carbon\Carbon;
 use Filament\Actions\Exports\ExportColumn;
 use Filament\Actions\Exports\Exporter;
 use Filament\Actions\Exports\Models\Export;
+use Wjbecker\FilamentReportBuilder\Models\Report;
+use Wjbecker\FilamentReportBuilder\Models\ReportExport;
 
 class ReportExporter extends Exporter
 {
+    private ?Report $report;
+
+    public function __construct(Export $export, array $columnMap, array $options)
+    {
+        parent::__construct($export, $columnMap, $options);
+        $this->report = ReportExport::where('export_id', $export->id)->first()->report ?? null;
+    }
+
     public static function getColumns($report = null): array
     {
         $columns = [];
@@ -38,6 +48,15 @@ class ReportExporter extends Exporter
         }
 
         return $columns;
+    }
+
+    public function getCachedColumns(): array
+    {
+        return $this->cachedColumns ?? array_reduce(static::getColumns($this->report), function (array $carry, ExportColumn $column): array {
+            $carry[$column->getName()] = $column->exporter($this);
+
+            return $carry;
+        }, []);
     }
 
     public static function getCompletedNotificationBody(Export $export): string
