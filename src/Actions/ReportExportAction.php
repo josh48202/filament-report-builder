@@ -44,9 +44,15 @@ class ReportExportAction extends Action
 
             $query = $exporter::modifyQuery($query);
 
+            $options = array_merge(
+                $action->getOptions(),
+                Arr::except($data, ['columnMap']),
+            );
+
             if ($this->modifyQueryUsing) {
                 $query = $this->evaluate($this->modifyQueryUsing, [
                     'query' => $query,
+                    'options' => $options,
                 ]) ?? $query;
             }
 
@@ -68,11 +74,6 @@ class ReportExportAction extends Action
             }
 
             $user = auth()->user();
-
-            $options = array_merge(
-                $action->getOptions(),
-                Arr::except($data, ['columnMap']),
-            );
 
             if ($action->hasColumnMapping()) {
                 $columnMap = collect($data['columnMap'])
@@ -132,14 +133,14 @@ class ReportExportAction extends Action
             ]);
 
             Bus::chain([
-                Bus::batch([new $job(
-                    $export,
-                    query: $serializedQuery,
-                    columnMap: $columnMap,
-                    options: $options,
-                    chunkSize: $action->getChunkSize(),
-                    records: $action instanceof ExportTableBulkAction ? $action->getRecords()->all() : null,
-                )])
+                Bus::batch([app($job, [
+                    'export' => $export,
+                    'query' => $serializedQuery,
+                    'columnMap' => $columnMap,
+                    'options' => $options,
+                    'chunkSize' => $action->getChunkSize(),
+                    'records' => $action instanceof ExportTableBulkAction ? $action->getRecords()->all() : null,
+                ])])
                     ->when(
                         filled($jobQueue),
                         fn (PendingBatch $batch) => $batch->onQueue($jobQueue),
@@ -177,7 +178,6 @@ class ReportExportAction extends Action
                 ->body(trans_choice('filament-actions::export.notifications.started.body', $export->total_rows, [
                     'count' => Number::format($export->total_rows),
                 ]))
-                ->duration(2000)
                 ->success()
                 ->send();
         });

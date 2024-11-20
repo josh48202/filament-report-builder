@@ -4,7 +4,6 @@ namespace Wjbecker\FilamentReportBuilder\Resources\ReportResource\Pages;
 
 use Illuminate\Support\Str;
 use Wjbecker\FilamentReportBuilder\Actions\ReportExportAction;
-use Wjbecker\FilamentReportBuilder\Exports\Jobs\PrepareCsvExport;
 use Wjbecker\FilamentReportBuilder\Exports\ReportExporter;
 use Wjbecker\FilamentReportBuilder\Resources\ReportResource;
 use Wjbecker\FilamentReportBuilder\Models\Report;
@@ -40,6 +39,7 @@ class ViewReport extends Page implements HasTable
         return [
             ReportExportAction::make()->label('Export')
                 ->exporter(ReportExporter::class)
+                ->chunkSize(1000)
                 ->record($this->record)
                 ->columnMapping(false)
                 ->fileName(function() {
