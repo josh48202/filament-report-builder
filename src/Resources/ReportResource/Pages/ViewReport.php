@@ -22,7 +22,10 @@ use Wjbecker\FilamentReportBuilder\Support\ReportQueryBuilder;
 
 class ViewReport extends Page implements HasTable
 {
-    use InteractsWithRecord, InteractsWithTable;
+    use InteractsWithRecord;
+    use InteractsWithTable {
+        paginateTableQuery as protected basePaginateTableQuery;
+    }
 
     protected static string $resource = ReportResource::class;
 
@@ -73,7 +76,7 @@ class ViewReport extends Page implements HasTable
 
     protected function paginateTableQuery(Builder $query): Paginator | CursorPaginator
     {
-        $records = parent::paginateTableQuery($query);
+        $records = $this->basePaginateTableQuery($query);
 
         // Fewer links around the current page so the page numbers fit at narrower widths
         return $records instanceof LengthAwarePaginator ? $records->onEachSide(1) : $records;
