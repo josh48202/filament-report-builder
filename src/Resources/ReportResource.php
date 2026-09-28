@@ -88,7 +88,10 @@ class ReportResource extends Resource
                                             ->options(fn (Get $get) => static::getAttributes($get('../../../data.source')))
                                             ->disableOptionsWhenSelectedInSiblingRepeaterItems()
                                             ->live()
-                                            ->afterStateUpdated(function (Set $set, string $state) {
+                                            ->afterStateHydrated(fn (Select $component, ?string $state, Get $get) => $component->state(static::normalizeAttributeState($state, $get('../../../data.source'))))
+                                            ->afterStateUpdated(function (Set $set, ?string $state) {
+                                                if (blank($state)) return;
+
                                                 $attribute = json_decode($state);
                                                 $set('column_title', Str::of($attribute->item)
                                                     ->when(isset($attribute->name), function (Stringable $string) use ($attribute) {
@@ -133,6 +136,7 @@ class ReportResource extends Resource
                                                             ->native(false)
                                                             ->required()
                                                             ->live()
+                                                            ->afterStateHydrated(fn (Select $component, ?string $state, Get $get) => $component->state(static::normalizeAttributeState($state, $get('../../../../../data.source'))))
                                                             ->afterStateUpdated(function (Select $component) {
                                                                 return $component
                                                                     ->getContainer()->getParentComponent()->getContainer()
@@ -222,6 +226,26 @@ class ReportResource extends Resource
         }
 
         return $attributes->sort();
+    }
+
+    /**
+     * Stored attribute keys embed metadata (e.g. cast) that can change when models change,
+     * so match the stored value to the current option by relation name and attribute instead.
+     */
+    public static function normalizeAttributeState(?string $state, ?string $source): ?string
+    {
+        if (blank($state) || blank($source)) return $state;
+
+        $stored = json_decode($state);
+
+        if (!isset($stored->item)) return $state;
+
+        return static::getAttributes($source)
+            ->keys()
+            ->first(function (string $key) use ($stored) {
+                $option = json_decode($key);
+                return $option->item === $stored->item && ($option->name ?? null) === ($stored->name ?? null);
+            }) ?? $state;
     }
 
     public static function getModelAttributes($model)

@@ -24,7 +24,7 @@ class ReportExporter extends Exporter
         $columns = [];
         foreach ($report->data['columns'] as $header) {
             $data = json_decode($header['column_data']);
-            $columns[] = ExportColumn::make($data->item)
+            $columns[] = ExportColumn::make((isset($data->name) ? $data->name.'.' : '').$data->item)
                 ->label($header['column_title'])
                 ->formatStateUsing(function ($state): string {
                     if ($state && gettype($state) === 'object' && class_exists(get_class($state))) {

@@ -24,10 +24,7 @@ class ReportQueryBuilder
         collect(data_get($this->report->data, 'filter_groups', []))->each(function ($group) use ($query) {
             $query->where(function ($query) use ($group) {
                 foreach ($group['filters'] as $filter) {
-                    $attribute = data_get(json_decode($filter['attribute']), 'type');
-                    $query->when($attribute, function (Builder $query) use ($filter, $attribute) {
-                        $query->orWhereRelation($attribute->name, fn (Builder $query) => $this->filterQuery($query, $filter));
-                    }, fn (Builder $query) => $this->applyFilter($query, $filter));
+                    $this->applyFilter($query, $filter);
                 }
             });
         });
@@ -41,11 +38,11 @@ class ReportQueryBuilder
 
     private function applyFilter(Builder $query, $filter): void
     {
-        $attribute = data_get(json_decode($filter['attribute']), 'type');
+        $attribute = json_decode($filter['attribute']);
         $value = $this->resolveFilterValue($filter);
 
-        $query->when($attribute, function (Builder $query) use ($filter, $attribute, $value) {
-            $query->orWhereRelation($attribute->name, fn (Builder $query) => $this->filterQuery($query, $filter, $value));
+        $query->when(isset($attribute->name), function (Builder $query) use ($filter, $attribute, $value) {
+            $query->whereRelation($attribute->name, fn (Builder $query) => $this->filterQuery($query, $filter, $value));
         }, fn (Builder $query) => $this->filterQuery($query, $filter, $value));
     }
 
