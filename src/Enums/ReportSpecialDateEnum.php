@@ -45,8 +45,8 @@ enum ReportSpecialDateEnum: string implements HasLabel
         return match ($this) {
             self::TODAY, self::YESTERDAY, self::TOMORROW => 'equal',
             self::THIS_MONTH, self::THIS_YEAR => 'between',
-            self::AFTER_TODAY => '>',
-            self::BEFORE_TODAY => '<',
+            self::AFTER_TODAY => 'greater',
+            self::BEFORE_TODAY => 'less',
         };
     }
 }

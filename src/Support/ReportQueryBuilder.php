@@ -64,21 +64,17 @@ class ReportQueryBuilder
     {
         $reportSpecialDate = ReportSpecialDateEnum::from($filter['special']);
         $values = $reportSpecialDate->getCarbonDates();
-        $condition = ReportConditionsEnum::from($reportSpecialDate->getCondition());
 
         if (is_array($values)) {
-            [$value, $value2] = $values;
-        } else {
-            $value = $values;
+            [$from, $to] = $values;
+
+            return $query->whereDate($attribute->item, '>=', $from->toDateString())
+                ->whereDate($attribute->item, '<=', $to->toDateString());
         }
 
-        // Adjust value for datetime fields
-        if ($attribute->cast === 'datetime') {
-            $value = Carbon::make($value)->startOfDay();
-            $value2 = isset($filter['value2']) ? Carbon::make($filter['value2'])->endOfDay() : null;
-        }
+        $condition = ReportConditionsEnum::from($reportSpecialDate->getCondition());
 
-        return $query->whereDate($attribute->item, $condition->getOperator(), $value ?? null);
+        return $query->whereDate($attribute->item, $condition->getOperator(), $values->toDateString());
     }
 
     private function applyBetweenCondition(Builder $query, $filter, $attribute, $condition): Builder
@@ -115,7 +111,7 @@ class ReportQueryBuilder
     private function resolveFilterValue($filter)
     {
         $condition = ReportConditionsEnum::from($filter['condition']);
-        $value = $filter['value'];
+        $value = $filter['value'] ?? null;
 
         return match ($condition) {
             ReportConditionsEnum::BEGINS_WITH, ReportConditionsEnum::NOT_BEGINS_WITH => $value . '%',
