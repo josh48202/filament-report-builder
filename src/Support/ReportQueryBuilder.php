@@ -55,7 +55,7 @@ class ReportQueryBuilder
             ReportConditionsEnum::IS_NULL => $query->whereNull($attribute->item),
             ReportConditionsEnum::IS_NOT_NULL => $query->whereNotNull($attribute->item),
             ReportConditionsEnum::SPECIAL_DATE => $this->applySpecialDateCondition($query, $filter, $attribute),
-            ReportConditionsEnum::BETWEEN, ReportConditionsEnum::NOT_BETWEEN => $query->whereBetween($attribute->item, $value),
+            ReportConditionsEnum::BETWEEN, ReportConditionsEnum::NOT_BETWEEN => $this->applyBetweenCondition($query, $filter, $attribute, $condition),
             default => $this->applyStandardCondition($query, $attribute, $condition, $value),
         };
     }
@@ -81,14 +81,30 @@ class ReportQueryBuilder
         return $query->whereDate($attribute->item, $condition->getOperator(), $value ?? null);
     }
 
+    private function applyBetweenCondition(Builder $query, $filter, $attribute, $condition): Builder
+    {
+        $not = $condition === ReportConditionsEnum::NOT_BETWEEN;
+
+        if ($attribute->cast === 'date' || $attribute->cast === 'datetime') {
+            $from = Carbon::make($filter['value'])->toDateString();
+            $to = Carbon::make($filter['value2'])->toDateString();
+
+            // Compare on the date part so the end date is inclusive for datetime columns
+            return $not
+                ? $query->where(fn (Builder $query) => $query
+                    ->whereDate($attribute->item, '<', $from)
+                    ->orWhereDate($attribute->item, '>', $to))
+                : $query->whereDate($attribute->item, '>=', $from)
+                    ->whereDate($attribute->item, '<=', $to);
+        }
+
+        return $query->whereBetween($attribute->item, [$filter['value'], $filter['value2']], 'and', $not);
+    }
+
     private function applyStandardCondition(Builder $query, $attribute, $condition, $value): Builder
     {
         if ($attribute->cast === 'date' || $attribute->cast === 'datetime') {
             $value = Carbon::make($value);
-
-            if ($attribute->cast === 'datetime' && isset($filter['value2'])) {
-                $value2 = Carbon::make($filter['value2'])->endOfDay();
-            }
 
             return $query->whereDate($attribute->item, $condition->getOperator(), $value);
         }

@@ -188,7 +188,9 @@ class ReportResource extends Resource
                                                                     $get('condition') === 'special_date';
                                                             });
 
-                                                        $components[] = DatePicker::make('value2')
+                                                        $isDate = $attribute->cast === 'date' || $attribute->cast === 'datetime';
+
+                                                        $components[] = ($isDate ? DatePicker::make('value2') : TextInput::make('value2'))
                                                             ->required()
                                                             ->hiddenLabel()
                                                             ->visible(function (Get $get) use ($attribute): bool {

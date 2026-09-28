@@ -14,6 +14,10 @@ use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Concerns\InteractsWithTable;
 use Filament\Tables\Contracts\HasTable;
 use Filament\Tables\Table;
+use Illuminate\Contracts\Pagination\CursorPaginator;
+use Illuminate\Contracts\Pagination\Paginator;
+use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Wjbecker\FilamentReportBuilder\Support\ReportQueryBuilder;
 
 class ViewReport extends Page implements HasTable
@@ -61,7 +65,18 @@ class ViewReport extends Page implements HasTable
             ->query(function () {
                 return (new ReportQueryBuilder($this->getRecord()))->query();
             })
-            ->columns($this->getColumns());
+            ->columns($this->getColumns())
+            ->paginated([25, 50, 100, 250, 500])
+            ->defaultPaginationPageOption(50)
+            ->extremePaginationLinks();
+    }
+
+    protected function paginateTableQuery(Builder $query): Paginator | CursorPaginator
+    {
+        $records = parent::paginateTableQuery($query);
+
+        // Fewer links around the current page so the page numbers fit at narrower widths
+        return $records instanceof LengthAwarePaginator ? $records->onEachSide(1) : $records;
     }
 
     public function getColumns(): array
